@@ -24,7 +24,7 @@ import {
 } from '../test/mocks.js';
 import { createSupabaseApiPlatform } from './platform/api-platform.js';
 import { BRANCH_COST_HOURLY, PROJECT_COST_MONTHLY } from './pricing.js';
-import { createSupabaseMcpServer, type FeatureGroup } from './server.js';
+import { createSupabaseMcpServer } from './server.js';
 
 beforeEach(async () => {
   mockOrgs.clear();
@@ -39,7 +39,7 @@ type SetupOptions = {
   accessToken?: string;
   projectId?: string;
   readOnly?: boolean;
-  features?: FeatureGroup[];
+  features?: string[];
 };
 
 /**
@@ -2097,14 +2097,14 @@ describe('tools', () => {
 
 describe('feature groups', () => {
   test('account tools', async () => {
-    const { client: accountClient } = await setup({
+    const { client } = await setup({
       features: ['account'],
     });
 
-    const { tools: accountTools } = await accountClient.listTools();
-    const accountToolNames = accountTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(accountToolNames).toEqual([
+    expect(toolNames).toEqual([
       'list_organizations',
       'get_organization',
       'list_projects',
@@ -2118,14 +2118,14 @@ describe('feature groups', () => {
   });
 
   test('database tools', async () => {
-    const { client: databaseClient } = await setup({
+    const { client } = await setup({
       features: ['database'],
     });
 
-    const { tools: databaseTools } = await databaseClient.listTools();
-    const databaseToolNames = databaseTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(databaseToolNames).toEqual([
+    expect(toolNames).toEqual([
       'list_tables',
       'list_extensions',
       'list_migrations',
@@ -2134,26 +2134,26 @@ describe('feature groups', () => {
     ]);
   });
 
-  test('debug tools', async () => {
-    const { client: debugClient } = await setup({
-      features: ['debug'],
+  test('debugging tools', async () => {
+    const { client } = await setup({
+      features: ['debugging'],
     });
 
-    const { tools: debugTools } = await debugClient.listTools();
-    const debugToolNames = debugTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(debugToolNames).toEqual(['get_logs', 'get_advisors']);
+    expect(toolNames).toEqual(['get_logs', 'get_advisors']);
   });
 
   test('development tools', async () => {
-    const { client: developmentClient } = await setup({
+    const { client } = await setup({
       features: ['development'],
     });
 
-    const { tools: developmentTools } = await developmentClient.listTools();
-    const developmentToolNames = developmentTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(developmentToolNames).toEqual([
+    expect(toolNames).toEqual([
       'get_project_url',
       'get_anon_key',
       'generate_typescript_types',
@@ -2161,39 +2161,36 @@ describe('feature groups', () => {
   });
 
   test('docs tools', async () => {
-    const { client: docsClient } = await setup({
+    const { client } = await setup({
       features: ['docs'],
     });
 
-    const { tools: docsTools } = await docsClient.listTools();
-    const docsToolNames = docsTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(docsToolNames).toEqual(['search_docs']);
+    expect(toolNames).toEqual(['search_docs']);
   });
 
   test('functions tools', async () => {
-    const { client: functionsClient } = await setup({
+    const { client } = await setup({
       features: ['functions'],
     });
 
-    const { tools: functionsTools } = await functionsClient.listTools();
-    const functionsToolNames = functionsTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(functionsToolNames).toEqual([
-      'list_edge_functions',
-      'deploy_edge_function',
-    ]);
+    expect(toolNames).toEqual(['list_edge_functions', 'deploy_edge_function']);
   });
 
   test('branching tools', async () => {
-    const { client: branchingClient } = await setup({
+    const { client } = await setup({
       features: ['branching'],
     });
 
-    const { tools: branchingTools } = await branchingClient.listTools();
-    const branchingToolNames = branchingTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(branchingToolNames).toEqual([
+    expect(toolNames).toEqual([
       'create_branch',
       'list_branches',
       'delete_branch',
@@ -2204,14 +2201,14 @@ describe('feature groups', () => {
   });
 
   test('storage tools', async () => {
-    const { client: storageClient } = await setup({
+    const { client } = await setup({
       features: ['storage'],
     });
 
-    const { tools: storageTools } = await storageClient.listTools();
-    const storageToolNames = storageTools.map((tool) => tool.name);
+    const { tools } = await client.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(storageToolNames).toEqual([
+    expect(toolNames).toEqual([
       'list_storage_buckets',
       'get_storage_config',
       'update_storage_config',
@@ -2220,7 +2217,7 @@ describe('feature groups', () => {
 
   test('invalid group fails', async () => {
     const setupPromise = setup({
-      features: ['my-invalid-group' as FeatureGroup],
+      features: ['my-invalid-group'],
     });
 
     await expect(setupPromise).rejects.toThrow('Invalid enum value');
@@ -2231,10 +2228,10 @@ describe('feature groups', () => {
       features: ['account', 'account'],
     });
 
-    const { tools: duplicateTools } = await duplicateClient.listTools();
-    const duplicateToolNames = duplicateTools.map((tool) => tool.name);
+    const { tools } = await duplicateClient.listTools();
+    const toolNames = tools.map((tool) => tool.name);
 
-    expect(duplicateToolNames).toEqual([
+    expect(toolNames).toEqual([
       'list_organizations',
       'get_organization',
       'list_projects',
